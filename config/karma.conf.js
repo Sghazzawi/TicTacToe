@@ -11,7 +11,7 @@ files = [
 ];
 
 autoWatch = true;
-
+urlRoot = /app/
 browsers = ['Chrome'];
 
 junitReporter = {
