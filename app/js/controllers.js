@@ -22,6 +22,10 @@ angular.module('myApp.controllers', []).
     };
   }])
   .controller('CreateOrJoinCtrl', ['$scope','$location','$http',function($scope, $location, $http) {
+    $http.get('/Games').success(function(data) {
+      $scope.exisgames = data;
+      console.log ($scope.exisgames);
+    });
     $scope.createGame = function() {
       $http.post('/Games',{}).success(function(data) {
         $location.path('/view1/'+data._id);

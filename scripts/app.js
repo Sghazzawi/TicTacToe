@@ -32,6 +32,10 @@ var games=[];
 
 app.get('/', function(req, res) {res.sendfile(require('path').normalize(__dirname + '/../app/index.html'));});
 
+app.get ('/Games', function(req, res) {
+  res.json(games);
+});
+
 app.post('/Games', function(req, res) {
   var gameState = {};
   gameState.moves = {}
