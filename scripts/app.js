@@ -3,8 +3,11 @@
  * Module dependencies.
  */
 
-var express = require("express");
-  var app = express();
+var express = require("express")
+  , app = express()
+  , http = require('http');
+var server = http.createServer(app);
+var io = require('socket.io').listen(server);
 
 // Configuration
 
@@ -53,8 +56,9 @@ app.get('/Games/:gameId', function(req, res) {
 
 app.post('/Games/:gameId/Moves', function (req, res) {
   games[req.param('gameId')].moves[req.body.type](req.body.args);
+  io.sockets.emit("update",games[req.param('gameId')].board);
   res.json(games[req.param('gameId')]);  
 });
-app.listen(8080, function(){
+server.listen(8080, function(){
   console.log("Express server listening on port %d in %s mode",8080, app.settings.env);
 });

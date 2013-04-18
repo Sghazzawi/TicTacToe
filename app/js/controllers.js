@@ -3,7 +3,10 @@
 /* Controllers */
 
 angular.module('myApp.controllers', []).
-  controller('MyCtrl1', ['$scope','$http','$routeParams', function($scope, $http, $routeParams) {
+  controller('MyCtrl1', ['$scope','$http','$routeParams','socket', function($scope, $http, $routeParams, socket) {
+    socket.on("update", function (data) {
+       $scope.board = data;
+    });
     $http.get('/Games/' + $routeParams.gameId).success(function(data) {
       $scope.board = data.board;
     });
@@ -15,10 +18,7 @@ angular.module('myApp.controllers', []).
       move.args.row = row;
       move.args.col = col;
       $http.post('/Games/' + $routeParams.gameId + '/Moves/',move).success(function(data) {
-        $scope.board = data.board;
-        console.log(data);
       });
-      console.log(row+" "+col);
     };
   }])
   .controller('CreateOrJoinCtrl', ['$scope','$location','$http',function($scope, $location, $http) {
