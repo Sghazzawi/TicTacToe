@@ -11,7 +11,7 @@ autoWatch = false;
 browsers = ['Chrome'];
 
 singleRun = true;
-
+urlRoot = '/app/';
 proxies = {
   '/': 'http://localhost:8000/'
 };
