@@ -9,6 +9,12 @@
     <p>
       <button class="btn btn-large btn-primary" type="button">Join Game</button>
     </p>
+    <form>
+      <fieldset>
+      <select ng-model="exisgames" ng-options="game._id as game._id for game in exisgames">
+      </select>
+      </fieldset>
+    </form>
   </div>
   </div>
 </div>

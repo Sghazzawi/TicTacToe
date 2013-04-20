@@ -7,8 +7,10 @@ angular.module('myApp.controllers', []).
     socket.on("update", function (data) {
        $scope.board = data;
     });
+    
     $http.get('/Games/' + $routeParams.gameId).success(function(data) {
       $scope.board = data.board;
+      $scope.players = data.players;
     });
 
     $scope.clicktile = function (row,col) {
