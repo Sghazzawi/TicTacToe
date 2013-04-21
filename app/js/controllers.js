@@ -4,10 +4,14 @@
 
 angular.module('myApp.controllers', []).
   controller('MyCtrl1', ['$scope','$http','$routeParams','socket', function($scope, $http, $routeParams, socket) {
-    socket.on("update", function (data) {
+    socket.on("updateBoard", function (data) {
        $scope.board = data;
     });
     
+    socket.on("updatePlayers", function (data) {
+       $scope.players = data;
+    });
+
     $http.get('/Games/' + $routeParams.gameId).success(function(data) {
       $scope.board = data.board;
       $scope.players = data.players;

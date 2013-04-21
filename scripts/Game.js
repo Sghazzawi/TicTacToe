@@ -14,4 +14,10 @@ Game.prototype.addPlayer = function(player) {
 Game.prototype.makeMove = function(type, args) {
   this.moves[type](args);
 };
+
+Game.prototype.setNextTurn = function(func) {
+  this.nextTurn = func;
+};
+
+
 module.exports = Game;

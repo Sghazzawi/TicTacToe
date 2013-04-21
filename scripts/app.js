@@ -47,8 +47,16 @@ app.post('/Games', function(req, res) {
   var player = players.getOrAddBySessionID(req.sessionID, function(player){
     var game = new Game();
     game.addPlayer(player);
+    game.currentTurn = player;
     game.addMove('clicktile', function(data) {
-      this.board[data.row][data.col] = 'x';
+      if (data.player.sessionID === this.currentTurn.sessionID){
+        this.board[data.row][data.col] = data.player.sessionID;
+        this.nextTurn();
+      }
+    });
+    game.setNextTurn(function() {
+      var nextPlayerIndex = (this.players.indexOf(this.currentTurn)+1)%(this.players.length);
+      this.currentTurn = this.players[nextPlayerIndex];
     });
     game.board = [['e','e','e'],
                   ['e','e','e'],
@@ -65,8 +73,9 @@ app.get('/Games/:gameId', function(req, res) {
         var game = games[req.param('gameId')];
         var found = _.findWhere(game.players,{sessionID: player.sessionID});
 
-      if ((found === null)||(found === undefined)){
+      if ((found === null) || (found === undefined)){
         game.addPlayer(player);
+        io.sockets.emit("updatePlayers",games[req.param('gameId')].players);
       }
 
       res.json(game);
@@ -79,9 +88,14 @@ app.get ('/Games/:gameId/Players', function (req, res) {
 }); 
 
 app.post('/Games/:gameId/Moves', function (req, res) {
-  games[req.param('gameId')].makeMove(req.body.type , req.body.args);
-  io.sockets.emit("update",games[req.param('gameId')].board);
-  res.json(games[req.param('gameId')]);  
+  var game = games[req.param('gameId')];
+  var args = req.body.args;
+  args.player = _.findWhere(game.players, {sessionID: req.sessionID});
+  if (( args.player !== null) && (args.player !== undefined)){
+    game.makeMove(req.body.type , req.body.args);
+    io.sockets.emit("updateBoard",game.board);
+  }
+  res.json(game);  
 });
 
 server.listen(8080, function(){
