@@ -4,12 +4,17 @@
 
 angular.module('myApp.controllers', []).
   controller('MyCtrl1', ['$scope','$http','$routeParams','socket', function($scope, $http, $routeParams, socket) {
-    socket.on("updateBoard", function (data) {
-       $scope.board = data;
+    socket.on("moveComplete", function (data) {
+       $scope.board = data.board;
     });
     
+
     socket.on("updatePlayers", function (data) {
        $scope.players = data;
+    });
+
+    socket.on("terminal", function (data) {
+       alert(data);
     });
 
     $http.get('/Games/' + $routeParams.gameId).success(function(data) {
@@ -33,7 +38,7 @@ angular.module('myApp.controllers', []).
       console.log ($scope.exisgames);
     });
     $scope.createGame = function() {
-      $http.post('/Games',{}).success(function(data) {
+      $http.post('/Games/tictactoe',{}).success(function(data) {
         $location.path('/view1/'+data._id);
       });
     } 

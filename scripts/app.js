@@ -5,99 +5,87 @@
 
 var express = require("express")
   , app = express()
-  , http = require('http')
-  , _ = require('underscore')
-  , Game = require('./Game.js')
-  , Player = require('./Player.js')
-  , PlayerRepo = require('./PlayerRepo.js');
+  , util = require('util')
+  , GameServer = require('./GameServer.js')
+  , Game = require ('./Game.js');
 
-var server = http.createServer(app);
-var io = require('socket.io').listen(server);
+  var TicTacToe = function (){
+    Game.call(this);
+    this.maxPlayers = 2;
+    this.terminalState = function () {
+       this.threeInARow = function (a, b, c) {
+         if (a == b && b == c && c !=='e') {
+           console.log('returning true');
+           console.log(c);
+           return true;
+         }
+           return false;
+       }
+       if (this.threeInARow(this.board[0][0], this.board[0][1], this.board[0][2])){
+         return {status:'winner', player: this.board[0][0]};
+       }
+       if (this.threeInARow(this.board[1][0], this.board[1][1], this.board[1][2])){
+         return {status:'winner', player: this.board[1][0]};
+       }
+       if (this.threeInARow(this.board[2][0], this.board[2][1], this.board[2][2])){
+         return {status:'winner', player: this.board[2][0]};
+       }
+       if (this.threeInARow(this.board[0][0], this.board[1][0], this.board[2][0])){
+         return {status:'winner', player: this.board[0][0]};
+       }
+       if (this.threeInARow(this.board[0][1], this.board[1][1], this.board[2][1])){
+         return {status:'winner', player: this.board[0][1]};
+       }
+       if (this.threeInARow(this.board[0][2], this.board[1][2], this.board[2][2])){
+         return {status:'winner', player: this.board[0][2]};
+       }
+       if (this.threeInARow(this.board[0][0], this.board[1][1], this.board[2][2])){
+         return {status:'winner', player: this.board[0][0]};
+       }
+       if (this.threeInARow(this.board[2][0], this.board[1][1], this.board[0][2])){
+         return {status:'winner', player: this.board[0][2]};
+       }
+       return null;
+    }
+    this.board = [['e','e','e'],
+                  ['e','e','e'],
+                  ['e','e','e']];
 
-// Configuration
-
-app.configure(function(){
-  app.use(express.cookieParser());
-  app.use(express.session({ secret: "keyboard cat"}));
-  app.use(express.bodyParser());
-  app.use(express.methodOverride());
-  app.use(app.router);
-  app.use(express.static(__dirname + '/../app'));
-});
-
-app.configure('development', function(){
-  app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
-});
-
-app.configure('production', function(){
-  app.use(express.errorHandler());
-});
-
-// Routes
-
-var games=[];
-var players = new PlayerRepo();
-app.get('/', function(req, res) {res.sendfile(require('path').normalize(__dirname + '/../app/index.html'));});
-
-app.get ('/Games', function(req, res) {
-  res.json(games);
-});
-
-app.post('/Games', function(req, res) {
-  var player = players.getOrAddBySessionID(req.sessionID, function(player){
-    var game = new Game();
-    game.addPlayer(player);
-    game.currentTurn = player;
-    game.addMove('clicktile', function(data) {
-      if (data.player.sessionID === this.currentTurn.sessionID){
-        this.board[data.row][data.col] = data.player.sessionID;
-        this.nextTurn();
-      }
+    this.addMove('clicktile', function (data){
+      this.board[data.row][data.col] = data.player.sessionID;
+      this.nextTurn();
     });
-    game.setNextTurn(function() {
+    
+    this.setNextTurn(function() {
       var nextPlayerIndex = (this.players.indexOf(this.currentTurn)+1)%(this.players.length);
       this.currentTurn = this.players[nextPlayerIndex];
     });
-    game.board = [['e','e','e'],
-                  ['e','e','e'],
-                  ['e','e','e']];
-    games.push(game);
-    game._id = games.indexOf(game);
-    res.json(game);
-  });
-});
 
-app.get('/Games/:gameId', function(req, res) {
-  var player = players.getOrAddBySessionID(req.sessionID, function(player){
-    if (req.param('gameId') < games.length) {
-        var game = games[req.param('gameId')];
-        var found = _.findWhere(game.players,{sessionID: player.sessionID});
-
-      if ((found === null) || (found === undefined)){
-        game.addPlayer(player);
-        io.sockets.emit("updatePlayers",games[req.param('gameId')].players);
+    this.setValidMoves(function() {
+      var validmoves = [];
+      for (var i = 0;i < this.board.length;i++){
+        for (var j = 0; j < this.board[i].length; j++){
+          if (this.board[i][j] === 'e'){
+            validmoves.push({type:'clicktile',
+                             args:{
+                                   player:this.currentturn, 
+                                   row:i,
+                                   col:j
+                             }
+                            });
+          }
+        }
       }
+      return validmoves;
+    });
+  };
+  
+  util.inherits(TicTacToe, Game);
+//var game = new Game();
 
-      res.json(game);
-    }
-  });
-});
+var gameServer = new GameServer(app);
+gameServer.listen();
+gameServer.register('tictactoe',TicTacToe);
 
-app.get ('/Games/:gameId/Players', function (req, res) {
-  res.json(games[req.param('gameId')].users);
-}); 
 
-app.post('/Games/:gameId/Moves', function (req, res) {
-  var game = games[req.param('gameId')];
-  var args = req.body.args;
-  args.player = _.findWhere(game.players, {sessionID: req.sessionID});
-  if (( args.player !== null) && (args.player !== undefined)){
-    game.makeMove(req.body.type , req.body.args);
-    io.sockets.emit("updateBoard",game.board);
-  }
-  res.json(game);  
-});
 
-server.listen(8080, function(){
-  console.log("Express server listening on port %d in %s mode",8080, app.settings.env);
-});

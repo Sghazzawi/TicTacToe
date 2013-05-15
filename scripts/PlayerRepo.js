@@ -11,13 +11,14 @@ PlayerRepo.prototype.getOrAddBySessionID = function (sessionID, cb) {
       var player = new Player();
       player.sessionID = sessionID;
       this.Players.push(player);
-      console.log("player = "+player);
       cb(player);
   } else { 
-      console.log("p = "+p);
       cb(p);
   }
   
 }
 
+PlayerRepo.prototype.getAll = function (cb) {
+  cb(this.Players);
+}
 module.exports = PlayerRepo;
